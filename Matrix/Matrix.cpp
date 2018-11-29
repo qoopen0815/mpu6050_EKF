@@ -327,7 +327,6 @@ void Matrix::print() const
         for( int j = 0; j < _nCols; j++ )
         {
             printf( "%.3f, ",_matrix[i][j] );
-
         }
         printf( "\n" );
     }
