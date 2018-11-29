@@ -60,7 +60,7 @@ int main()
 	A_val[0][0][5] = 0;
 	A_val[0][0][6] = 0;
 	A_val[0][0][7] = 0;
-	A_val[0][1][0] = ((preWhat_y*sin(prethetahat_r))/(cos(prethetahat_p)^2)+(preWhat_z*cos(prethetahat_r))/(cos(prethetahat_p)^2))*T_s;
+	A_val[0][1][0] = ((preWhat_y*sin(prethetahat_r))/(pow(cos(prethetahat_p),2))+(preWhat_z*cos(prethetahat_r))/(pow(cos(prethetahat_p),2)))*T_s;
 	A_val[0][1][1] = 1+(preWhat_y*cos(prethetahat_r)-preWhat_z*sin(prethetahat_r))*T_s*tan(prethetahat_p);
 	A_val[0][1][2] = T_s;
 	A_val[0][1][3] = T_s*sin(prethetahat_r)*tan(prethetahat_p);
@@ -74,17 +74,17 @@ int main()
 	C_val[0][0][2] = 0;
 	C_val[0][0][3] = 0;
 	C_val[0][0][4] = 0;
-	C_val[0][0][5] = -1*sqrt(a_y^2)+a_z^2)/(a_x^2+a_y^2+a_z^2);
-	C_val[0][0][6] = a_x*a_y/(sqrt(a_y^2+a_z^2)*(a_x^2+a_y^2+a_z^2));
-	C_val[0][0][7] = a_x*a_z/(sqrt(a_y^2+a_z^2)*(a_x^2+a_y^2+a_z^2));
+	C_val[0][0][5] = -1*sqrt(pow(a_y,2))+pow(a_z,2)/(pow(a_x,2)+pow(a_y,2)+pow(a_z,2));
+        C_val[0][0][6] = a_x*a_y/(sqrt(pow(a_y,2)+pow(a_z,2))*(pow(a_x,2)+pow(a_y,2)+pow(a_z,2)));
+	C_val[0][0][7] = a_x*a_z/(sqrt(pow(a_y,2)+pow(a_z,2))*(pow(a_x,2)+pow(a_y,2)+pow(a_z,2)));
 	C_val[0][1][0] = 0;
 	C_val[0][1][1] = 0;
 	C_val[0][1][2] = 0;
 	C_val[0][1][3] = 0;
 	C_val[0][1][4] = 0;
 	C_val[0][1][5] = 0;
-	C_val[0][1][6] = a_z/(a_y^2+a_z^2);
-	C_val[0][1][7] = -1*a_y/(a_y^2+a_z^2);
+	C_val[0][1][6] = a_z/(pow(a_y,2)+pow(a_z,2));
+	C_val[0][1][7] = -1*a_y/(pow(a_y,2)+pow(a_z,2));
 	
         /*-----------calc-----------*/
         A << A_val[0][0][0]  << A_val[0][0][1]  << A_val[0][0][2]  << A_val[0][0][3]  << A_val[0][0][4]  << A_val[0][0][5]  << A_val[0][0][6]  << A_val[0][0][7]
