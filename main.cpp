@@ -15,10 +15,13 @@ int main()
 {
   pc.printf("start program");
   pc.printf("\r\n");
+
+  pc.printf("prepare param");
   t1.start();
   float gyro[N]={};
   float accel[N]={};
   float sigma_v = 0.5, sigma_w = 0.5;
+  float roll, pitch;
   float thetahat_r[2]={};
   float thetahat_p[2]={};
   float prethetahat_r[2]={};
@@ -43,14 +46,17 @@ int main()
   float h_val[8][1]={};
   float A_val[8][8]={};
   float C_val[8][8]={};
+  pc.printf("\t done\r\n");
 
+  pc.printf("prepare matrix");
   Matrix y(8,1);
   Matrix f(8,1);
   Matrix h(8,1);
   Matrix A(8,8);
   Matrix B(8,8);
   Matrix C(8,8);
-  Matrix E(8,8);  
+  Matrix E(8,8);
+  pc.printf("\t done\r\n");
     
   // Fill Matrix with data.
   E << 1            << 0            << 0            << 0            << 0            << 0            << 0            << 0
@@ -64,12 +70,17 @@ int main()
     
   Matrix P(E);
 
-  while(true) {
+  while(true)
+    {
     /*-----------update-----------*/
     //timer
+    pc.printf("start timer");
     double T_s = t1.read();
     t1.reset();
+    pc.printf("\t done\r\n");
+
     //pass param
+    pc.printf("pass param");
     thetahat_r[0]=thetahat_r[1];
     thetahat_p[0]=thetahat_p[1];
     prethetahat_r[0]=prethetahat_r[1];
@@ -89,7 +100,10 @@ int main()
     preahat_x[0]=preahat_x[1];
     preahat_y[0]=preahat_y[1];
     preahat_z[0]=preahat_z[1];
+    pc.printf("\t done\r\n");
+
     //mpu
+    pc.printf("give mpu");
     mpu.getGyro(gyro);
     W_x[1] = gyro[0];
     W_y[1] = gyro[1];
@@ -98,6 +112,9 @@ int main()
     a_x[1] = accel[0];
     a_y[1] = accel[1];
     a_z[1] = accel[2];
+    pc.printf("\t done\r\n");
+
+    pc.printf("give matrix_val");
     //y_val
     y_val[0][0] = -1*atan2(a_x[1],sqrt(pow(a_y[1],2)+pow(a_z[1],2)));
     y_val[1][0] = atan2(a_y[1],a_z[1]);
@@ -159,6 +176,9 @@ int main()
     C_val[1][5] = 0;
     C_val[1][6] = preahat_z[1]/(pow(preahat_y[1],2)+pow(preahat_z[1],2));
     C_val[1][7] = -1*preahat_y[1]/(pow(preahat_y[1],2)+pow(preahat_z[1],2));
+    pc.printf("\t done\r\n");
+
+    pc.printf("fill matrix");
     //fill y_matrix
     y << y_val[0][0]
       << y_val[1][0]
@@ -213,27 +233,38 @@ int main()
       << 0            << 0            << 0            << 0            << 0            << 1            << 0            << 0         
       << 0            << 0            << 0            << 0            << 0            << 0            << 1            << 0         
       << 0            << 0            << 0            << 0            << 0            << 0            << 0            << 1;
-	
+    pc.printf("\t done\r\n");
+    
     Matrix P_1(P);
 	
     /*-----------calc-----------*/
+    pc.printf("calc start");
     /*step1*/
     //prexhat
     Matrix prexhat(f);
+    pc.printf("\t done");
     //preP
     Matrix preP = A*P_1*MatrixMath::Transpose(A)+pow(sigma_v,2)*B;
+    pc.printf("\t done");
 
     /*step2*/
     //kalman gain g
     Matrix g = preP*C*MatrixMath::det(MatrixMath::Transpose(C)*preP*C+pow(sigma_w,2));
+    pc.printf("\t done");
     Matrix xhat = prexhat + g*(y-h);
+    pc.printf("\t done");
     Matrix P = (E - g*MatrixMath::Transpose(C))*preP;
-
+    pc.printf("\t done\r\n");
+    
     /*-----------draw-----------*/
-    //      pc.printf("EKF: Roll:%.4f \t Pitch:%.4f",Roll,Pitch);
-    float roll = xhat.getNumber(0,0);
-    float pitch = xhat.getNumber(1,0);
-    pc.printf("roll:%.3f\tpitch:%.3f",roll ,pitch);
-    pc.printf("\r\n");
-  }
+    pc.printf("give param");
+    roll = 1;//xhat.getNumber(0,0);
+    pc.printf("\t done");
+    pitch = 2;//xhat.getNumber(1,0);
+    pc.printf("\t done\r\n");
+
+    pc.printf("draw result \t");
+    pc.printf("roll:%f \t pitch:%f",roll ,pitch);
+    pc.printf("\t done\r\n");
+    }
 }
