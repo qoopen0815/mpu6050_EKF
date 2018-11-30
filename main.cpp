@@ -12,7 +12,7 @@
  { \
    for (int j = 0; j < MATRIX.cols(); ++j) \
    { \
-     std::printf("%f\t\t", MATRIX(i, j)); \
+     std::printf("%.3f\t", MATRIX(i, j)); \
    } \
    std::printf("\r\n");				\
  } \
