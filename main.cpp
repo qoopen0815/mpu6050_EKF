@@ -65,18 +65,8 @@ int main()
   MatrixXf A(8,8);
   MatrixXf B(8,8);
   MatrixXf C(8,8);
-  MatrixXf E(8,8);
+  MatrixXf Identity(8,8);
   pc.printf("\t done\r\n");
-    
-  // Fill Matrix with data.
-  E << 1,              0,              0,              0,              0,              0,              0,              0,
-       0,              1,              0,              0,              0,              0,              0,              0,
-       0,              0,              1,              0,              0,              0,              0,              0,
-       0,              0,              0,              1,              0,              0,              0,              0,        
-       0,              0,              0,              0,              1,              0,              0,              0,       
-       0,              0,              0,              0,              0,              1,              0,              0,      
-       0,              0,              0,              0,              0,              0,              1,              0,     
-       0,              0,              0,              0,              0,              0,              0,              1;
     
   MatrixXf P(E);
 
@@ -271,7 +261,7 @@ int main()
     /*step2*/
     //kalman gain g
     MatrixXf Q = preP*C;
-    MatrixXf q = C.transpose()*Q+pow(sigma_w,2)*E;
+    MatrixXf q = C.transpose()*Q+pow(sigma_w,2)*Identity;
     MatrixXf g = Q*q.inverse();
     pc.printf("\t done");
     MatrixXf xhat = prexhat + g*(y-h);
@@ -286,7 +276,7 @@ int main()
     // ahat_z[1] = xhat(7,0);
     
     pc.printf("\t done");
-    MatrixXf P = (E - g*C.transpose())*preP;
+    MatrixXf P = (Identity - g*C.transpose())*preP;
     pc.printf("\t done\r\n");
     
     /*-----------draw-----------*/
