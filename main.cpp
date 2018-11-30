@@ -271,9 +271,6 @@ int main()
     What_x[1] = xhat(2,0);
     What_y[1] = xhat(3,0);
     What_z[1] = xhat(4,0);
-    // ahat_x[1] = xhat(5,0);
-    // ahat_y[1] = xhat(6,0);
-    // ahat_z[1] = xhat(7,0);
     
     pc.printf("\t done");
     MatrixXf P = (Identity - g*C.transpose())*preP;
