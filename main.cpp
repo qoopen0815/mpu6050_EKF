@@ -6,6 +6,16 @@
 #define M_PI 3.14159265358979323846
 #define N 3
 
+#define PRINT_MATRIX(MATRIX) \
+ std::printf(#MATRIX "_matrix\r\n"); \
+ for (int i_ = 0; MATRIX.rows(); ++i_) \
+ { \
+   for (int j_ = 0; MATRIX.cols(); ++j_) \
+   { \
+     std::printf("%f\t", MATRIX(i_, j_)); \
+   } \
+ } \
+
 using namespace Eigen;
 Serial pc(USBTX, USBRX);
 MPU6050 mpu(p28,p27);   //sda,scl
@@ -242,6 +252,17 @@ int main()
     /*step1*/
     //prexhat
     MatrixXf prexhat(f);
+
+    prethetahat_r[1] = prexhat(0,0);
+    prethetahat_p[1] = prexhat(1,0);
+    preWhat_x[1] = prexhat(2,0);
+    preWhat_y[1] = prexhat(3,0);
+    preWhat_z[1] = prexhat(4,0);
+    preahat_x[1] = prexhat(5,0);
+    preahat_y[1] = prexhat(6,0);
+    preahat_z[1] = prexhat(7,0);
+    PRINT_MATRIX(prexhat);
+    
     pc.printf("\t done");
     //preP
     MatrixXf preP = A*P_1*A.transpose()+pow(sigma_v,2)*B;
@@ -254,6 +275,16 @@ int main()
     MatrixXf g = Q*q.inverse();
     pc.printf("\t done");
     MatrixXf xhat = prexhat + g*(y-h);
+
+    thetahat_r[1] = xhat(0,0);
+    thetahat_p[1] = xhat(1,0);
+    What_x[1] = xhat(2,0);
+    What_y[1] = xhat(3,0);
+    What_z[1] = xhat(4,0);
+    // ahat_x[1] = xhat(5,0);
+    // ahat_y[1] = xhat(6,0);
+    // ahat_z[1] = xhat(7,0);
+    
     pc.printf("\t done");
     MatrixXf P = (E - g*C.transpose())*preP;
     pc.printf("\t done\r\n");
