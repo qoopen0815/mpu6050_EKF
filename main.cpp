@@ -68,7 +68,7 @@ int main()
   MatrixXf Identity(8,8);
   pc.printf("\t done\r\n");
     
-  MatrixXf P(E);
+  MatrixXf P = Identity;
 
   while(true)
     {
@@ -235,13 +235,13 @@ int main()
          0,              0,              0,              0,              0,              0,              0,              1;
     pc.printf("\t done\r\n");
     
-    MatrixXf P_1(P);
+    MatrixXf P_1 = P;
 	
     /*-----------calc-----------*/
     pc.printf("calc start");
     /*step1*/
     //prexhat
-    MatrixXf prexhat(f);
+    MatrixXf prexhat = f;
 
     prethetahat_r[1] = prexhat(0,0);
     prethetahat_p[1] = prexhat(1,0);
