@@ -265,8 +265,41 @@ int main()
     pitch = 2;//xhat.getNumber(1,0);
     pc.printf("\t done\r\n");
 
-    pc.printf("draw result \t");
-    pc.printf("roll:%f \t pitch:%f",roll ,pitch);
-    pc.printf("\t done\r\n");
+    pc.printf("check matrix\r\n");
+    int i,j;
+    pc.printf("y_matrix\r\n");
+    for(i=0;i<y.rows();i++)
+    {
+        for(j=0;j<y.cols();j++)
+        {
+            pc.printf("%.3f\t", y(i,j));
+        }
+        pc.printf("\r\n");
+    }
+    
+    pc.printf("f_matrix\r\n");
+    for(i=0;i<f.rows();i++)
+    {
+        for(j=0;j<f.cols();j++)
+        {
+            pc.printf("%.3f\t", f(i,j));
+        }
+        pc.printf("\r\n");
+    }
+    
+    pc.printf("h_matrix\r\n");
+    for(i=0;i<h.rows();i++)
+    {
+        for(j=0;j<h.cols();j++)
+        {
+            pc.printf("%.3f\t", h(i,j));
+        }
+        pc.printf("\r\n");
+    }
+
+    // pc.printf("draw result \t");
+    // pc.printf("kalman: Roll:%.2f \t Pitch:%.2f",roll,pitch);
+    // // pc.printf("roll:%f \t pitch:%f",roll ,pitch);
+    // pc.printf("\t done\r\n");
     }
 }
