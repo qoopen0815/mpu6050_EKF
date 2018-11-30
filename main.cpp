@@ -6,6 +6,7 @@
 #define M_PI 3.14159265358979323846
 #define N 3
 
+//debug matrix
 #define PRINT_MATRIX(MATRIX) \
  std::printf(#MATRIX "_matrix\r\n"); \
  for (int i = 0; i < MATRIX.rows(); ++i) \
@@ -189,6 +190,7 @@ int main()
          y_val[5][0],           
          y_val[6][0],           
          y_val[7][0];
+    PRINT_MATRIX(y);
     //fill f_matrix
     f << f_val[0][0],
          f_val[1][0],
@@ -198,6 +200,7 @@ int main()
          f_val[5][0],           
          f_val[6][0],           
          f_val[7][0];
+    PRINT_MATRIX(f);
     //fill h_matrix
     h << h_val[0][0],
          h_val[1][0],
@@ -207,6 +210,7 @@ int main()
          h_val[5][0],           
          h_val[6][0],           
          h_val[7][0];
+    PRINT_MATRIX(h);
     //fill A_matrix
     A << A_val[0][0],    A_val[0][1],    A_val[0][2],    A_val[0][3],    A_val[0][4],    A_val[0][5],    A_val[0][6],    A_val[0][7],
          A_val[1][0],    A_val[1][1],    A_val[1][2],    A_val[1][3],    A_val[1][4],    A_val[1][5],    A_val[1][6],    A_val[1][7],
@@ -216,6 +220,7 @@ int main()
          0,              0,              0,              0,              0,              1,              0,              0,         
          0,              0,              0,              0,              0,              0,              1,              0,         
          0,              0,              0,              0,              0,              0,              0,              1;
+    PRINT_MATRIX(A);
     //fill B_matrix
     B << 1,              0,              0,              0,              0,              0,              0,              0,
          0,              1,              0,              0,              0,              0,              0,              0,
@@ -225,6 +230,7 @@ int main()
          0,              0,              0,              0,              0,              1,              0,              0,         
          0,              0,              0,              0,              0,              0,              1,              0,         
          0,              0,              0,              0,              0,              0,              0,              1;
+    PRINT_MATRIX(B);
     //fill C_matrix
     C << C_val[0][0],    C_val[0][1],    C_val[0][2],    C_val[0][3],    C_val[0][4],    C_val[0][5],    C_val[0][6],    C_val[0][7],
          C_val[1][0],    C_val[1][1],    C_val[1][2],    C_val[1][3],    C_val[1][4],    C_val[1][5],    C_val[1][6],    C_val[1][7],
@@ -234,15 +240,18 @@ int main()
          0,              0,              0,              0,              0,              1,              0,              0,         
          0,              0,              0,              0,              0,              0,              1,              0,         
          0,              0,              0,              0,              0,              0,              0,              1;
+    PRINT_MATRIX(C);
     // pc.printf("\t done\r\n");
     
     MatrixXf P_1 = P;
+    PRINT_MATRIX(P_1);
 	
     /*-----------calc-----------*/
     // pc.printf("calc start");
     /*step1*/
     //prexhat
     MatrixXf prexhat = f;
+    PRINT_MATRIX(prexhat);
 
     prethetahat_r[1] = prexhat(0,0);
     prethetahat_p[1] = prexhat(1,0);
@@ -252,20 +261,24 @@ int main()
     preahat_x[1] = prexhat(5,0);
     preahat_y[1] = prexhat(6,0);
     preahat_z[1] = prexhat(7,0);
-    PRINT_MATRIX(prexhat);
     
     // pc.printf("\t done");
     //preP
     MatrixXf preP = A*P_1*A.transpose()+pow(sigma_v,2)*B;
+    PRINT_MATRIX(preP);
     // pc.printf("\t done");
 
     /*step2*/
     //kalman gain g
     MatrixXf Q = preP*C;
+    PRINT_MATRIX(Q);
     MatrixXf q = C.transpose()*Q+pow(sigma_w,2)*Identity;
+    PRINT_MATRIX(q);
     MatrixXf g = Q*q.inverse();
+    PRINT_MATRIX(g);
     // pc.printf("\t done");
     MatrixXf xhat = prexhat + g*(y-h);
+    PRINT_MATRIX(xhat);
 
     thetahat_r[1] = xhat(0,0);
     thetahat_p[1] = xhat(1,0);
@@ -275,6 +288,7 @@ int main()
     
     // pc.printf("\t done");
     MatrixXf P = (Identity - g*C.transpose())*preP;
+    PRINT_MATRIX(P);
     // pc.printf("\t done\r\n");
     
     /*-----------draw-----------*/
@@ -284,13 +298,6 @@ int main()
     pitch = 2;//xhat.getNumber(1,0);
     // pc.printf("\t done\r\n");
 
-    pc.printf("check matrix\r\n");
-    PRINT_MATRIX(y);
-    PRINT_MATRIX(f);
-    PRINT_MATRIX(h);
-    PRINT_MATRIX(A);
-    PRINT_MATRIX(B);
-    PRINT_MATRIX(C);
     
     // pc.printf("draw result \t");
     // pc.printf("kalman: Roll:%.2f \t Pitch:%.2f",roll,pitch);
