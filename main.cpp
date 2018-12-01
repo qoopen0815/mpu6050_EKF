@@ -25,38 +25,38 @@ Timer t1;
 
 int main()
 {
-  pc.printf("start program");
+  pc.printf("\r\n---------------------start program---------------------");
   pc.printf("\r\n");
 
   t1.start();
-  float gyro[N]={0};
-  float accel[N]={0};
+  float gyro[N]={1};
+  float accel[N]={1};
   float sigma_v = 0.5, sigma_w = 0.5;
   float roll, pitch;
-  float thetahat_r[2]={0};
-  float thetahat_p[2]={0};
-  float prethetahat_r[2]={0};
-  float prethetahat_p[2]={0};
-  float W_x[2]={0};
-  float W_y[2]={0};
-  float W_z[2]={0};
-  float What_x[2]={0};
-  float What_y[2]={0};
-  float What_z[2]={0};
-  float preWhat_x[2]={0};
-  float preWhat_y[2]={0};
-  float preWhat_z[2]={0};
-  float a_x[2]={0};
-  float a_y[2]={0};
-  float a_z[2]={0};
-  float preahat_x[2]={0};
-  float preahat_y[2]={0};
-  float preahat_z[2]={0};
-  float y_val[8][1]={0};
-  float f_val[8][1]={0};
-  float h_val[8][1]={0};
-  float A_val[8][8]={0};
-  float C_val[8][8]={0};
+  float thetahat_r[2]={1};
+  float thetahat_p[2]={1};
+  float prethetahat_r[2]={1};
+  float prethetahat_p[2]={1};
+  float W_x[2]={1};
+  float W_y[2]={1};
+  float W_z[2]={1};
+  float What_x[2]={1};
+  float What_y[2]={1};
+  float What_z[2]={1};
+  float preWhat_x[2]={1};
+  float preWhat_y[2]={1};
+  float preWhat_z[2]={1};
+  float a_x[2]={1};
+  float a_y[2]={1};
+  float a_z[2]={1};
+  float preahat_x[2]={1};
+  float preahat_y[2]={1};
+  float preahat_z[2]={1};
+  float y_val[8][1]={1};
+  float f_val[8][1]={1};
+  float h_val[8][1]={1};
+  float A_val[8][8]={1};
+  float C_val[8][8]={1};
 
   MatrixXf y(8,1);
   MatrixXf f(8,1);
@@ -127,12 +127,12 @@ int main()
     //f_val
     f_val[0][0] = thetahat_p[0]+(What_y[0]*cos(thetahat_r[0])-What_z[0]*sin(thetahat_r[0]))*T_s;
     f_val[1][0] = thetahat_r[0]+(What_x[0]+(What_y[0]*sin(thetahat_r[0])+What_z[0]*cos(thetahat_r[0]))*tan(thetahat_p[0]))*T_s;
-    f_val[2][0] = 0;
-    f_val[3][0] = 0;
-    f_val[4][0] = 0;
-    f_val[5][0] = 0;
-    f_val[6][0] = 0;
-    f_val[7][0] = 0;
+    f_val[2][0] = sigma_v;
+    f_val[3][0] = sigma_v;
+    f_val[4][0] = sigma_v;
+    f_val[5][0] = sigma_v;
+    f_val[6][0] = sigma_v;
+    f_val[7][0] = sigma_v;
     //fill f_matrix
     f << f_val[0][0],
          f_val[1][0],
@@ -191,17 +191,17 @@ int main()
     C_val[0][2] = 0;
     C_val[0][3] = 0;
     C_val[0][4] = 0;
-    C_val[0][5] = -1*sqrt(pow(preahat_y[1],2))+pow(preahat_z[1],2)/(pow(preahat_x[1],2)+pow(preahat_y[1],2)+pow(preahat_z[1],2));
-    C_val[0][6] = preahat_x[1]*preahat_y[1]/(sqrt(pow(preahat_y[1],2)+pow(preahat_z[1],2))*(pow(preahat_x[1],2)+pow(preahat_y[1],2)+pow(preahat_z[1],2)));
-    C_val[0][7] = preahat_x[1]*preahat_z[1]/(sqrt(pow(preahat_y[1],2)+pow(preahat_z[1],2))*(pow(preahat_x[1],2)+pow(preahat_y[1],2)+pow(preahat_z[1],2)));
+    C_val[0][5] = -1 * sqrt( pow(preahat_y[1],2)+pow(preahat_z[1],2) ) / ( pow(preahat_x[1],2)+pow(preahat_y[1],2)+pow(preahat_z[1],2) );
+    C_val[0][6] = preahat_x[1]*preahat_y[1] / (sqrt( pow(preahat_y[1],2)+pow(preahat_z[1],2) ) * ( pow(preahat_x[1],2)+pow(preahat_y[1],2)+pow(preahat_z[1],2) ));
+    C_val[0][7] = preahat_x[1]*preahat_z[1] / (sqrt( pow(preahat_y[1],2)+pow(preahat_z[1],2) ) * ( pow(preahat_x[1],2)+pow(preahat_y[1],2)+pow(preahat_z[1],2) ));
     C_val[1][0] = 0;
     C_val[1][1] = 0;
     C_val[1][2] = 0;
     C_val[1][3] = 0;
     C_val[1][4] = 0;
     C_val[1][5] = 0;
-    C_val[1][6] = preahat_z[1]/(pow(preahat_y[1],2)+pow(preahat_z[1],2));
-    C_val[1][7] = -1*preahat_y[1]/(pow(preahat_y[1],2)+pow(preahat_z[1],2));
+    C_val[1][6] = preahat_z[1] / ( pow(preahat_y[1],2)+pow(preahat_z[1],2) );
+    C_val[1][7] = -1 * preahat_y[1] / ( pow(preahat_y[1],2)+pow(preahat_z[1],2) );
     //fill C_matrix
     C << C_val[0][0],    C_val[0][1],    C_val[0][2],    C_val[0][3],    C_val[0][4],    C_val[0][5],    C_val[0][6],    C_val[0][7],
          C_val[1][0],    C_val[1][1],    C_val[1][2],    C_val[1][3],    C_val[1][4],    C_val[1][5],    C_val[1][6],    C_val[1][7],
