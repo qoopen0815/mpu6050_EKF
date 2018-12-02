@@ -34,11 +34,11 @@ int main()
   mpu.getGyro(gyro);
   mpu.getAccelero(accel);
   float sigma_v = 0, sigma_w = 0.5;
-  float roll, pitch;
-  float thetahat_r[2]={1,1};
+  float pitch, roll;
   float thetahat_p[2]={1,1};
-  float prethetahat_r[2]={1,1};
+  float thetahat_r[2]={1,1};
   float prethetahat_p[2]={1,1};
+  float prethetahat_r[2]={1,1};
   float W_x[2]={1,1};
   float W_y[2]={1,1};
   float W_z[2]={1,1};
@@ -70,7 +70,7 @@ int main()
   MatrixXf B(8,8);
   MatrixXf C(8,8);
   MatrixXf Identity = MatrixXf::Identity(8,8);
-  PRINT_MATRIX(Identity);
+  // PRINT_MATRIX(Identity);
   /*
   MatrixXf SigmaV(8,1);  //bunsan
   SigmaV << 0,
@@ -81,12 +81,12 @@ int main()
             0,//pow(0.0013684641,2),           
             0,//pow(0.0012666226,2),           
             0;//pow(0.003095776,2);
-  PRINT_MATRIX(SigmaV);
+  // PRINT_MATRIX(SigmaV);
   */  
   MatrixXf P = Identity;
   //P => P_1
   MatrixXf P_1 = P;
-  PRINT_MATRIX(P_1);
+  // PRINT_MATRIX(P_1);
   B = Identity;
   
   while(true)
@@ -97,10 +97,10 @@ int main()
     t1.reset();
 
     //pass param
-    thetahat_r[0]=thetahat_r[1];
     thetahat_p[0]=thetahat_p[1];
-    prethetahat_r[0]=prethetahat_r[1];
+    thetahat_r[0]=thetahat_r[1];
     prethetahat_p[0]=prethetahat_p[1];
+    prethetahat_r[0]=prethetahat_r[1];
     W_x[0]=W_x[1];
     W_y[0]=W_y[1];
     W_z[0]=W_z[1];
@@ -150,14 +150,14 @@ int main()
          f_val[5][0],           
          f_val[6][0],           
          f_val[7][0];
-    PRINT_MATRIX(f);
+    // PRINT_MATRIX(f);
     
     //prexhat
     MatrixXf prexhat = f;
-    PRINT_MATRIX(prexhat);
+    // PRINT_MATRIX(prexhat);
     //fill prexhat param
-    prethetahat_r[1] = prexhat(0,0);
-    prethetahat_p[1] = prexhat(1,0);
+    prethetahat_p[1] = prexhat(0,0);
+    prethetahat_r[1] = prexhat(1,0);
     preWhat_x[1] = prexhat(2,0);
     preWhat_y[1] = prexhat(3,0);
     preWhat_z[1] = prexhat(4,0);
@@ -191,7 +191,7 @@ int main()
          0,              0,              0,              0,              0,              1,              0,              0,         
          0,              0,              0,              0,              0,              0,              1,              0,         
          0,              0,              0,              0,              0,              0,              0,              1;
-    PRINT_MATRIX(A);
+    // PRINT_MATRIX(A);
     
     //C_val
     C_val[0][0] = 0;
@@ -219,20 +219,20 @@ int main()
          0,              0,              0,              0,              0,              1,              0,              0,         
          0,              0,              0,              0,              0,              0,              1,              0,         
          0,              0,              0,              0,              0,              0,              0,              1;
-    PRINT_MATRIX(C);
+    // PRINT_MATRIX(C);
     
     //preP
     MatrixXf preP = A*P_1*A.transpose()+sigma_v*B;
-    PRINT_MATRIX(preP);
+    // PRINT_MATRIX(preP);
 
     /*step2*/
     //kalman gain g
     MatrixXf Q = preP*C.transpose();
-    PRINT_MATRIX(Q);
+    // PRINT_MATRIX(Q);
     MatrixXf q = C*Q+pow(sigma_w,2)*Identity;
-    PRINT_MATRIX(q);
+    // PRINT_MATRIX(q);
     MatrixXf g = Q*q.inverse();
-    PRINT_MATRIX(g);
+    // PRINT_MATRIX(g);
     
     //y_val
     y_val[0][0] = -1*atan2(a_x[1],sqrt(pow(a_y[1],2)+pow(a_z[1],2)));
@@ -252,7 +252,7 @@ int main()
          y_val[5][0],           
          y_val[6][0],           
          y_val[7][0];
-    PRINT_MATRIX(y);
+    // PRINT_MATRIX(y);
     
     //h_val
     h_val[0][0] = -1*atan2(preahat_x[1],sqrt(pow(preahat_y[1],2)+pow(preahat_z[1],2)));
@@ -272,14 +272,14 @@ int main()
          h_val[5][0],           
          h_val[6][0],           
          h_val[7][0];
-    PRINT_MATRIX(h);
+    // PRINT_MATRIX(h);
 
     //xhat
     MatrixXf xhat = prexhat + g*(y-h);
-    PRINT_MATRIX(xhat);
+    // PRINT_MATRIX(xhat);
     //fill xhat param
-    thetahat_r[1] = xhat(0,0);
-    thetahat_p[1] = xhat(1,0);
+    thetahat_p[1] = xhat(0,0);
+    thetahat_r[1] = xhat(1,0);
     What_x[1] = xhat(2,0);
     What_y[1] = xhat(3,0);
     What_z[1] = xhat(4,0);
@@ -289,9 +289,9 @@ int main()
 
     //P
     MatrixXf P = (Identity - g*C)*preP;
-    PRINT_MATRIX(P);
+    // PRINT_MATRIX(P);
     P_1 = P;
-    PRINT_MATRIX(P_1);
+    // PRINT_MATRIX(P_1);
     
     /*-----------draw-----------*/
     // pc.printf("give param");
