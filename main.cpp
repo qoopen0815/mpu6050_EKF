@@ -22,9 +22,12 @@ using namespace Eigen;
 Serial pc(USBTX, USBRX);
 MPU6050 mpu(p28,p27);   //sda,scl
 Timer t1;
+//LocalFileSystem local("local");
 
 int main()
 {
+  //FILE *fp = fopen("/local/result.csv", "w");
+
   pc.printf("\r\n---------------------start program---------------------");
   pc.printf("\r\n");
 
@@ -33,61 +36,52 @@ int main()
   float accel[N]={};
   mpu.getGyro(gyro);
   mpu.getAccelero(accel);
-  float roll, pitch;
-  float thetahat_p[2]={-0.047299827,1};
-  float thetahat_r[2]={0.038440683 ,1};
-  float prethetahat_p[2]={1,1};
-  float prethetahat_r[2]={1,1};
-  float W_x[2]={1,1};
-  float W_y[2]={1,1};
-  float W_z[2]={1,1};
-  float What_x[2]={-0.0367934,gyro[0]};
-  float What_y[2]={0.08030829,gyro[1]};
-  float What_z[2]={0.00066347,gyro[2]};
-  float preWhat_x[2]={1,1};
-  float preWhat_y[2]={1,1};
-  float preWhat_z[2]={1,1};
-  float a_x[2]={1,1};
-  float a_y[2]={1,1};
-  float a_z[2]={1,1};
-  float ahat_x[2]={0.39872278,accel[0]};
-  float ahat_y[2]={0.32371096,accel[1]};
-  float ahat_z[2]={8.4187571,accel[2]};
-  float preahat_x[2]={1,1};
-  float preahat_y[2]={1,1};
-  float preahat_z[2]={1,1};
-  float y_val[8][1]={};
-  float f_val[8][1]={};
-  float h_val[8][1]={};
-  float A_val[8][8]={};
-  float C_val[8][8]={};
 
-  MatrixXf y(8,1);
-  MatrixXf f(8,1);
-  MatrixXf h(8,1);
-  MatrixXf A(8,8);
-  MatrixXf B(8,8);
-  MatrixXf C(8,8);
-  MatrixXf Identity = MatrixXf::Identity(8,8);
-  // PRINT_MATRIX(Identity);
+  float g = 9.80665;
+  float sigma_v[4]={0.01, 0.01, 0.01, 0.01};
+  float sigma_w[3]={1.0, 1.0, 10.0};//{0.0013684641, 0.0012666226, 0.003095776};
+
+  float Deg[3] = {};
+  float W_x[2]={-0.0367934,gyro[0]};
+  float W_y[2]={0.08030829,gyro[1]};
+  float W_z[2]={0.00066347,gyro[2]};
+  float a_x;
+  float a_y;
+  float a_z;
+
+  MatrixXf preX(4,1);
+  MatrixXf X(4,1);
+  MatrixXf y(3,1);
+  MatrixXf f(4,4);
+  MatrixXf h(3,1);
+  MatrixXf A(4,4);
+  MatrixXf c(3,4);
+  MatrixXf E = MatrixXf::Identity(4,4);
+  MatrixXf SigmaV(4,4); //system dispersion
+  MatrixXf SigmaW(3,3); //observe dispersion
+
+  MatrixXf C(3,3);
   
-  float sigma_v = 100;     //system dispersion
-  MatrixXf SigmaW(8,8);  //observe dispersion
-  SigmaW << 0.0000201,         0,           0,          0,          0,             0,             0,            0,
-                    0, 0.0000185,           0,          0,          0,             0,             0,            0,
-                    0,         0,  0.00000501,          0,          0,             0,             0,            0, 
-                    0,         0,           0,  0.0000352,          0,             0,             0,            0,
-                    0,         0,           0,          0,  0.0000026,             0,             0,            0,
-                    0,         0,           0,          0,          0,  0.0013684641,             0,            0,
-                    0,         0,           0,          0,          0,             0,  0.0012666226,            0,     
-                    0,         0,           0,          0,          0,             0,             0,  0.003095776;
+  SigmaV << sigma_v[0],          0,          0,          0,
+                     0, sigma_v[1],          0,          0,
+                     0,          0, sigma_v[2],          0, 
+                     0,          0,          0, sigma_v[3];
+  // PRINT_MATRIX(SigmaV);
+  
+  SigmaW << sigma_w[0],          0,          0,
+                     0, sigma_w[1],          0,
+                     0,          0, sigma_w[2];
   // PRINT_MATRIX(SigmaW);
-    
-  MatrixXf P = Identity;
+  
+  MatrixXf P = 0.01*E;
   //P => P_1
   MatrixXf P_1 = P;
   // PRINT_MATRIX(P_1);
-  B = Identity;
+  X << 0,
+       0,
+       0,
+       1.0;
+  MatrixXf X_1 = X;
   
   while(true)
     {
@@ -102,208 +96,77 @@ int main()
     W_y[1] = gyro[1];
     W_z[1] = gyro[2];
     mpu.getAccelero(accel);
-    a_x[1] = accel[0];
-    a_y[1] = accel[1];
-    a_z[1] = accel[2];
+    a_x = accel[0];
+    a_y = accel[1];
+    a_z = accel[2];
     
     /*-----------calc-----------*/
     /*step1*/
-    //f_val
-    f_val[0][0] = thetahat_p[0]+(What_y[0]*cos(thetahat_r[0])-What_z[0]*sin(thetahat_r[0]))*T_s;
-    f_val[1][0] = thetahat_r[0]+(What_x[0]+(What_y[0]*sin(thetahat_r[0])+What_z[0]*cos(thetahat_r[0]))*tan(thetahat_p[0]))*T_s;
-    f_val[2][0] = What_x[0];
-    f_val[3][0] = What_y[0];
-    f_val[4][0] = What_z[0];
-    f_val[5][0] = ahat_x[0];
-    f_val[6][0] = ahat_y[0];
-    f_val[7][0] = ahat_z[0];
-    //fill f_matrix
-    f << f_val[0][0],
-         f_val[1][0],
-         f_val[2][0],         
-         f_val[3][0],         
-         f_val[4][0],         
-         f_val[5][0],           
-         f_val[6][0],           
-         f_val[7][0];
-    // PRINT_MATRIX(f);
-    
-    //prexhat
-    MatrixXf prexhat = f;
-    // PRINT_MATRIX(prexhat);
-    //fill prexhat param
-    prethetahat_p[1] = prexhat(0,0);
-    prethetahat_r[1] = prexhat(1,0);
-    preWhat_x[1] = prexhat(2,0);
-    preWhat_y[1] = prexhat(3,0);
-    preWhat_z[1] = prexhat(4,0);
-    preahat_x[1] = prexhat(5,0);
-    preahat_y[1] = prexhat(6,0);
-    preahat_z[1] = prexhat(7,0);
-
-    //A_val
-    A_val[0][0] = 1;
-    A_val[0][1] = (-preWhat_y[0]*sin(prethetahat_r[0])-preWhat_z[0]*cos(prethetahat_r[0]))*T_s;
-    A_val[0][2] = 0;
-    A_val[0][3] = T_s*cos(prethetahat_r[0]);
-    A_val[0][4] = -1*T_s*sin(prethetahat_r[0]);
-    A_val[0][5] = 0;
-    A_val[0][6] = 0;
-    A_val[0][7] = 0;
-    A_val[1][0] = ((preWhat_y[0]*sin(prethetahat_r[0]))/(pow(cos(prethetahat_p[0]),2))+(preWhat_z[0]*cos(prethetahat_r[0]))/(pow(cos(prethetahat_p[0]),2)))*T_s;
-    A_val[1][1] = 1+(preWhat_y[0]*cos(prethetahat_r[0])-preWhat_z[0]*sin(prethetahat_r[0]))*T_s*tan(prethetahat_p[0]);
-    A_val[1][2] = T_s;
-    A_val[1][3] = T_s*sin(prethetahat_r[0])*tan(prethetahat_p[0]);
-    A_val[1][4] = T_s*cos(prethetahat_r[0])*tan(prethetahat_p[0]);
-    A_val[1][5] = 0;
-    A_val[1][6] = 0;
-    A_val[1][7] = 0;
-    //fill A_matrix
-    A << A_val[0][0],    A_val[0][1],    A_val[0][2],    A_val[0][3],    A_val[0][4],    A_val[0][5],    A_val[0][6],    A_val[0][7],
-         A_val[1][0],    A_val[1][1],    A_val[1][2],    A_val[1][3],    A_val[1][4],    A_val[1][5],    A_val[1][6],    A_val[1][7],
-         0,              0,              1,              0,              0,              0,              0,              0,         
-         0,              0,              0,              1,              0,              0,              0,              0,         
-         0,              0,              0,              0,              1,              0,              0,              0,         
-         0,              0,              0,              0,              0,              1,              0,              0,         
-         0,              0,              0,              0,              0,              0,              1,              0,         
-         0,              0,              0,              0,              0,              0,              0,              1;
+    A << 1,                   T_s*W_z[0]/2,     -1*T_s*W_y[0]/2,  T_s*W_x[0]/2,
+         -1*T_s*W_z[0]/2,  1,                   T_s*W_x[0]/2,     T_s*W_y[0]/2,
+         T_s*W_y[0]/2,     -1*T_s*W_x[0]/2,  1,                   T_s*W_z[0]/2,                   
+         -1*T_s*W_x[0]/2,  -1*T_s*W_y[0]/2,  -1*T_s*W_z[0]/2,  1;
     // PRINT_MATRIX(A);
+
+    f = A*X_1;
+    // PRINT_MATRIX(f);
+
+    preX = f;
     
-    //C_val
-    C_val[0][0] = 0;
-    C_val[0][1] = 0;
-    C_val[0][2] = 0;
-    C_val[0][3] = 0;
-    C_val[0][4] = 0;
-    C_val[0][5] = -1 * sqrt( pow(preahat_y[1],2)+pow(preahat_z[1],2) ) / ( pow(preahat_x[1],2)+pow(preahat_y[1],2)+pow(preahat_z[1],2) );
-    C_val[0][6] = preahat_x[1]*preahat_y[1] / (sqrt( pow(preahat_y[1],2)+pow(preahat_z[1],2) ) * ( pow(preahat_x[1],2)+pow(preahat_y[1],2)+pow(preahat_z[1],2) ));
-    C_val[0][7] = preahat_x[1]*preahat_z[1] / (sqrt( pow(preahat_y[1],2)+pow(preahat_z[1],2) ) * ( pow(preahat_x[1],2)+pow(preahat_y[1],2)+pow(preahat_z[1],2) ));
-    C_val[1][0] = 0;
-    C_val[1][1] = 0;
-    C_val[1][2] = 0;
-    C_val[1][3] = 0;
-    C_val[1][4] = 0;
-    C_val[1][5] = 0;
-    C_val[1][6] = preahat_z[1] / ( pow(preahat_y[1],2)+pow(preahat_z[1],2) );
-    C_val[1][7] = -1 * preahat_y[1] / ( pow(preahat_y[1],2)+pow(preahat_z[1],2) );
-    //fill C_matrix
-    C << C_val[0][0],    C_val[0][1],    C_val[0][2],    C_val[0][3],    C_val[0][4],    C_val[0][5],    C_val[0][6],    C_val[0][7],
-         C_val[1][0],    C_val[1][1],    C_val[1][2],    C_val[1][3],    C_val[1][4],    C_val[1][5],    C_val[1][6],    C_val[1][7],
-         0,              0,              1,              0,              0,              0,              0,              0,         
-         0,              0,              0,              1,              0,              0,              0,              0,         
-         0,              0,              0,              0,              1,              0,              0,              0,         
-         0,              0,              0,              0,              0,              1,              0,              0,         
-         0,              0,              0,              0,              0,              0,              1,              0,         
-         0,              0,              0,              0,              0,              0,              0,              1;
-    // PRINT_MATRIX(C);
+    h << 2*g*(preX(2,0)*preX(0,0)-preX(1,0)*preX(3,0)),
+         2*g*(preX(1,0)*preX(2,0)+preX(0,0)*preX(3,0)),
+         g*(pow(preX(2,0),2) - pow(preX(0,0),2) - pow(preX(1,0),2) - pow(preX(3,0),2));
+    // PRINT_MATRIX(h);
+
+    c << 2*g*preX(2,0),   -2*g*preX(3,0),  2*g*preX(0,0),  -2*g*preX(1,0),
+         2*g*preX(3,0),   2*g*preX(2,0),   2*g*preX(1,0),  2*g*preX(0,0),
+         -2*g*preX(0,0),  -2*g*preX(1,0),  2*g*preX(2,0),  2*g*preX(3,0);
+    // PRINT_MATRIX(c);
     
-    //preP
-    MatrixXf preP = A*P_1*A.transpose()+sigma_v*B;
+    MatrixXf preP = A*P_1*A.transpose()+SigmaV;
     // PRINT_MATRIX(preP);
 
     /*step2*/
     //kalman gain g
-    MatrixXf Q = preP*C.transpose();
+    MatrixXf Q = preP*c.transpose();
     // PRINT_MATRIX(Q);
-    MatrixXf q = C*Q+SigmaW;
+    MatrixXf q = c*Q+SigmaW;
     // PRINT_MATRIX(q);
     MatrixXf g = Q*q.inverse();
     // PRINT_MATRIX(g);
     
-    //y_val
-    y_val[0][0] = -1*atan2(a_x[1],sqrt(pow(a_y[1],2)+pow(a_z[1],2)));
-    y_val[1][0] = atan2(a_y[1],a_z[1]);
-    y_val[2][0] = W_x[1];
-    y_val[3][0] = W_y[1];
-    y_val[4][0] = W_z[1];
-    y_val[5][0] = a_x[1];
-    y_val[6][0] = a_y[1];
-    y_val[7][0] = a_z[1];
-    //fill y_matrix
-    y << y_val[0][0],
-         y_val[1][0],
-         y_val[2][0],        
-         y_val[3][0],       
-         y_val[4][0],         
-         y_val[5][0],           
-         y_val[6][0],           
-         y_val[7][0];
+    y << a_x,
+         a_y,
+         a_z;
     // PRINT_MATRIX(y);
     
-    //h_val
-    h_val[0][0] = -1*atan2(preahat_x[1],sqrt(pow(preahat_y[1],2)+pow(preahat_z[1],2)));
-    h_val[1][0] = atan2(preahat_y[1],preahat_z[1]);
-    h_val[2][0] = preWhat_x[1];
-    h_val[3][0] = preWhat_y[1];
-    h_val[4][0] = preWhat_z[1];
-    h_val[5][0] = preahat_x[1];
-    h_val[6][0] = preahat_y[1];
-    h_val[7][0] = preahat_z[1];
-    //fill h_matrix
-    h << h_val[0][0],
-         h_val[1][0],
-         h_val[2][0],         
-         h_val[3][0],         
-         h_val[4][0],         
-         h_val[5][0],           
-         h_val[6][0],           
-         h_val[7][0];
-    // PRINT_MATRIX(h);
-
-    //xhat
-    MatrixXf xhat = prexhat + g*(y-h);
-    // PRINT_MATRIX(xhat);
-    //fill xhat param
-    thetahat_p[1] = xhat(0,0);
-    thetahat_r[1] = xhat(1,0);
-    What_x[1] = xhat(2,0);
-    What_y[1] = xhat(3,0);
-    What_z[1] = xhat(4,0);
-    ahat_x[1] = xhat(5,0);
-    ahat_y[1] = xhat(6,0);
-    ahat_z[1] = xhat(7,0);
-
+    MatrixXf X = preX + g*(y-h);
+    // PRINT_MATRIX(X);
+    
     //P
-    MatrixXf P = (Identity - g*C)*preP;
+    MatrixXf P = (E - g*c)*preP;
     // PRINT_MATRIX(P);
     P_1 = P;
     // PRINT_MATRIX(P_1);
-    
-    /*-----------draw-----------*/
-    // pc.printf("give param");
-    pitch = thetahat_p[1];
-    // pc.printf("\t done");
-    roll = thetahat_r[1];
-    // pc.printf("\t done\r\n");
 
+    //DCM to Quaternion
+    C << (pow(X(0,0),2)-pow(X(1,0),2)-pow(X(2,0),2)+pow(X(3,0),2)),  2*(X(0,0)*X(1,0)+X(2,0)*X(3,0)),                            2*(X(2,0)*X(0,0)-X(1,0)*X(3,0)),
+         2*(X(0,0)*X(1,0)-X(2,0)*X(3,0)),                            (pow(X(1,0),2)-pow(X(2,0),2)-pow(X(0,0),2)+pow(X(3,0),2)),  2*(X(1,0)*X(2,0)+X(0,0)*X(3,0)),
+         2*(X(2,0)*X(0,0)+X(1,0)*X(3,0)),                            2*(X(1,0)*X(2,0)-X(0,0)*X(3,0)),                            (pow(X(2,0),2)-pow(X(0,0),2)-pow(X(1,0),2)+pow(X(3,0),2));
+    // PRINT_MATRIX(C);
+
+    //roll, pitch, yaw
+    Deg[1] = asin(-1*C(0,2));                                  //pitch
+    Deg[0] = atan2(C(0,1)/cos(Deg[1]), C(0,0)/cos(Deg[1]));    //yaw
+    Deg[2] = atan2(C(1,2)/cos(Deg[1]), C(2,2)/cos(Deg[1]));    //roll
     
-    pc.printf("draw result \t");
-    pc.printf("kalman: Pitch:%.2f \t Roll:%.2f", pitch, roll);
-    // // pc.printf("roll:%f \t pitch:%f",roll ,pitch);
-    pc.printf("\r\n");
+    /*-----------draw-----------*/    
+    //fprintf(fp, "kalman \t %f,%f,%f \t observe \t %f,%f\r\n", Deg[0], Deg[1], Deg[2], -1*atan2(a_x,sqrt(pow(a_y,2)+pow(a_z,2))), atan2(a_y,a_z));
+    pc.printf("kalman \t %f,%f,%f \t observe \t %f,%f\r\n", Deg[0], Deg[1], Deg[2], -1*atan2(a_x,sqrt(pow(a_y,2)+pow(a_z,2))), atan2(a_y,a_z));
     
     //pass param
-    thetahat_p[0]=thetahat_p[1];
-    thetahat_r[0]=thetahat_r[1];
-    prethetahat_p[0]=prethetahat_p[1];
-    prethetahat_r[0]=prethetahat_r[1];
     W_x[0]=W_x[1];
     W_y[0]=W_y[1];
     W_z[0]=W_z[1];
-    What_x[0]=What_x[1];
-    What_y[0]=What_y[1];
-    What_z[0]=What_z[1];
-    preWhat_x[0]=preWhat_x[1];
-    preWhat_y[0]=preWhat_y[1];
-    preWhat_z[0]=preWhat_z[1];
-    a_x[0]=a_x[1];
-    a_y[0]=a_y[1];
-    a_z[0]=a_z[1];
-    ahat_x[0]=ahat_x[1];
-    ahat_y[0]=ahat_y[1];
-    ahat_z[0]=ahat_z[1];
-    preahat_x[0]=preahat_x[1];
-    preahat_y[0]=preahat_y[1];
-    preahat_z[0]=preahat_z[1];
     }
 }
