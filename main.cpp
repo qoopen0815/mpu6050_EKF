@@ -7,16 +7,16 @@
 #define N 3
 
 //debug matrix
-#define PRINT_MATRIX(MATRIX)			\
-  std::printf(#MATRIX "_matrix\r\n");		\
-  for (int i = 0; i < MATRIX.rows(); ++i)	\
-    {						\
-      for (int j = 0; j < MATRIX.cols(); ++j)	\
-	{					\
-	  std::printf("%.3f\t", MATRIX(i, j));	\
-	}					\
-      std::printf("\r\n");			\
-    }						\
+#define PRINT_MATRIX(MATRIX)  \
+ std::printf(#MATRIX "_matrix\r\n"); \
+ for (int i = 0; i < MATRIX.rows(); ++i) \
+ { \
+   for (int j = 0; j < MATRIX.cols(); ++j) \
+   { \
+     std::printf("%.3f\t", MATRIX(i, j)); \
+   } \
+   std::printf("\r\n");             \
+ } \
 
 using namespace Eigen;
 Serial pc(USBTX, USBRX);
@@ -33,27 +33,26 @@ int main()
   float accel[N]={};
   mpu.getGyro(gyro);
   mpu.getAccelero(accel);
-  float sigma_v = 0, sigma_w = 0.5;
-  float pitch, roll;
-  float thetahat_p[2]={1,1};
-  float thetahat_r[2]={1,1};
+  float roll, pitch;
+  float thetahat_p[2]={-0.047299827,1};
+  float thetahat_r[2]={0.038440683 ,1};
   float prethetahat_p[2]={1,1};
   float prethetahat_r[2]={1,1};
   float W_x[2]={1,1};
   float W_y[2]={1,1};
   float W_z[2]={1,1};
-  float What_x[2]={1,gyro[0]};
-  float What_y[2]={1,gyro[1]};
-  float What_z[2]={1,gyro[2]};
+  float What_x[2]={-0.0367934,gyro[0]};
+  float What_y[2]={0.08030829,gyro[1]};
+  float What_z[2]={0.00066347,gyro[2]};
   float preWhat_x[2]={1,1};
   float preWhat_y[2]={1,1};
   float preWhat_z[2]={1,1};
   float a_x[2]={1,1};
   float a_y[2]={1,1};
   float a_z[2]={1,1};
-  float ahat_x[2]={1,accel[0]};
-  float ahat_y[2]={1,accel[1]};
-  float ahat_z[2]={1,accel[2]};
+  float ahat_x[2]={0.39872278,accel[0]};
+  float ahat_y[2]={0.32371096,accel[1]};
+  float ahat_z[2]={8.4187571,accel[2]};
   float preahat_x[2]={1,1};
   float preahat_y[2]={1,1};
   float preahat_z[2]={1,1};
@@ -71,18 +70,19 @@ int main()
   MatrixXf C(8,8);
   MatrixXf Identity = MatrixXf::Identity(8,8);
   // PRINT_MATRIX(Identity);
-  /*
-  MatrixXf SigmaV(8,1);  //bunsan
-  SigmaV << 0,
-            0,
-            0,         
-            0,         
-            0,         
-            0,//pow(0.0013684641,2),           
-            0,//pow(0.0012666226,2),           
-            0;//pow(0.003095776,2);
-  // PRINT_MATRIX(SigmaV);
-  */  
+  
+  float sigma_v = 100;     //system dispersion
+  MatrixXf SigmaW(8,8);  //observe dispersion
+  SigmaW << 0.0000201,         0,           0,          0,          0,             0,             0,            0,
+                    0, 0.0000185,           0,          0,          0,             0,             0,            0,
+                    0,         0,  0.00000501,          0,          0,             0,             0,            0, 
+                    0,         0,           0,  0.0000352,          0,             0,             0,            0,
+                    0,         0,           0,          0,  0.0000026,             0,             0,            0,
+                    0,         0,           0,          0,          0,  0.0013684641,             0,            0,
+                    0,         0,           0,          0,          0,             0,  0.0012666226,            0,     
+                    0,         0,           0,          0,          0,             0,             0,  0.003095776;
+  // PRINT_MATRIX(SigmaW);
+    
   MatrixXf P = Identity;
   //P => P_1
   MatrixXf P_1 = P;
@@ -96,30 +96,6 @@ int main()
     double T_s = t1.read();
     t1.reset();
 
-    //pass param
-    thetahat_p[0]=thetahat_p[1];
-    thetahat_r[0]=thetahat_r[1];
-    prethetahat_p[0]=prethetahat_p[1];
-    prethetahat_r[0]=prethetahat_r[1];
-    W_x[0]=W_x[1];
-    W_y[0]=W_y[1];
-    W_z[0]=W_z[1];
-    What_x[0]=What_x[1];
-    What_y[0]=What_y[1];
-    What_z[0]=What_z[1];
-    preWhat_x[0]=preWhat_x[1];
-    preWhat_y[0]=preWhat_y[1];
-    preWhat_z[0]=preWhat_z[1];
-    a_x[0]=a_x[1];
-    a_y[0]=a_y[1];
-    a_z[0]=a_z[1];
-    ahat_x[0]=ahat_x[1];
-    ahat_y[0]=ahat_y[1];
-    ahat_z[0]=ahat_z[1];
-    preahat_x[0]=preahat_x[1];
-    preahat_y[0]=preahat_y[1];
-    preahat_z[0]=preahat_z[1];
-
     //mpu
     mpu.getGyro(gyro);
     W_x[1] = gyro[0];
@@ -129,7 +105,7 @@ int main()
     a_x[1] = accel[0];
     a_y[1] = accel[1];
     a_z[1] = accel[2];
-	
+    
     /*-----------calc-----------*/
     /*step1*/
     //f_val
@@ -229,7 +205,7 @@ int main()
     //kalman gain g
     MatrixXf Q = preP*C.transpose();
     // PRINT_MATRIX(Q);
-    MatrixXf q = C*Q+pow(sigma_w,2)*Identity;
+    MatrixXf q = C*Q+SigmaW;
     // PRINT_MATRIX(q);
     MatrixXf g = Q*q.inverse();
     // PRINT_MATRIX(g);
@@ -295,15 +271,39 @@ int main()
     
     /*-----------draw-----------*/
     // pc.printf("give param");
-    roll = 1;//xhat.getNumber(0,0);
+    pitch = thetahat_p[1];
     // pc.printf("\t done");
-    pitch = 2;//xhat.getNumber(1,0);
+    roll = thetahat_r[1];
     // pc.printf("\t done\r\n");
 
     
-    // pc.printf("draw result \t");
-    // pc.printf("kalman: Roll:%.2f \t Pitch:%.2f",roll,pitch);
+    pc.printf("draw result \t");
+    pc.printf("kalman: Pitch:%.2f \t Roll:%.2f", pitch, roll);
     // // pc.printf("roll:%f \t pitch:%f",roll ,pitch);
-    // pc.printf("\t done\r\n");
+    pc.printf("\r\n");
+    
+    //pass param
+    thetahat_p[0]=thetahat_p[1];
+    thetahat_r[0]=thetahat_r[1];
+    prethetahat_p[0]=prethetahat_p[1];
+    prethetahat_r[0]=prethetahat_r[1];
+    W_x[0]=W_x[1];
+    W_y[0]=W_y[1];
+    W_z[0]=W_z[1];
+    What_x[0]=What_x[1];
+    What_y[0]=What_y[1];
+    What_z[0]=What_z[1];
+    preWhat_x[0]=preWhat_x[1];
+    preWhat_y[0]=preWhat_y[1];
+    preWhat_z[0]=preWhat_z[1];
+    a_x[0]=a_x[1];
+    a_y[0]=a_y[1];
+    a_z[0]=a_z[1];
+    ahat_x[0]=ahat_x[1];
+    ahat_y[0]=ahat_y[1];
+    ahat_z[0]=ahat_z[1];
+    preahat_x[0]=preahat_x[1];
+    preahat_y[0]=preahat_y[1];
+    preahat_z[0]=preahat_z[1];
     }
 }
