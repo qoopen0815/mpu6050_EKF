@@ -66,17 +66,15 @@ int main()
                      0, sigma_v[1],          0,          0,
                      0,          0, sigma_v[2],          0, 
                      0,          0,          0, sigma_v[3];
-  // PRINT_MATRIX(SigmaV);
   
   SigmaW << sigma_w[0],          0,          0,
                      0, sigma_w[1],          0,
                      0,          0, sigma_w[2];
-  // PRINT_MATRIX(SigmaW);
   
   MatrixXf P = 0.01*E;
   //P => P_1
   MatrixXf P_1 = P;
-  // PRINT_MATRIX(P_1);
+
   X << 0,
        0,
        0,
@@ -102,59 +100,46 @@ int main()
     
     /*-----------calc-----------*/
     /*step1*/
-    A << 1,                   T_s*W_z[0]/2,     -1*T_s*W_y[0]/2,  T_s*W_x[0]/2,
-         -1*T_s*W_z[0]/2,  1,                   T_s*W_x[0]/2,     T_s*W_y[0]/2,
-         T_s*W_y[0]/2,     -1*T_s*W_x[0]/2,  1,                   T_s*W_z[0]/2,                   
+    A << 1,                T_s*W_z[0]/2,     -1*T_s*W_y[0]/2,  T_s*W_x[0]/2,
+         -1*T_s*W_z[0]/2,  1,                T_s*W_x[0]/2,     T_s*W_y[0]/2,
+         T_s*W_y[0]/2,     -1*T_s*W_x[0]/2,  1,                T_s*W_z[0]/2,                   
          -1*T_s*W_x[0]/2,  -1*T_s*W_y[0]/2,  -1*T_s*W_z[0]/2,  1;
-    // PRINT_MATRIX(A);
-
+    
     f = A*X_1;
-    // PRINT_MATRIX(f);
-
+    
     preX = f;
     
     h << 2*g*(preX(2,0)*preX(0,0)-preX(1,0)*preX(3,0)),
          2*g*(preX(1,0)*preX(2,0)+preX(0,0)*preX(3,0)),
          g*(pow(preX(2,0),2) - pow(preX(0,0),2) - pow(preX(1,0),2) - pow(preX(3,0),2));
-    // PRINT_MATRIX(h);
-
+    
     c << 2*g*preX(2,0),   -2*g*preX(3,0),  2*g*preX(0,0),  -2*g*preX(1,0),
          2*g*preX(3,0),   2*g*preX(2,0),   2*g*preX(1,0),  2*g*preX(0,0),
          -2*g*preX(0,0),  -2*g*preX(1,0),  2*g*preX(2,0),  2*g*preX(3,0);
-    // PRINT_MATRIX(c);
     
     MatrixXf preP = A*P_1*A.transpose()+SigmaV;
-    // PRINT_MATRIX(preP);
-
+    
     /*step2*/
     //kalman gain g
     MatrixXf Q = preP*c.transpose();
-    // PRINT_MATRIX(Q);
     MatrixXf q = c*Q+SigmaW;
-    // PRINT_MATRIX(q);
     MatrixXf g = Q*q.inverse();
-    // PRINT_MATRIX(g);
     
     y << a_x,
          a_y,
          a_z;
-    // PRINT_MATRIX(y);
     
     MatrixXf X = preX + g*(y-h);
-    // PRINT_MATRIX(X);
     
     //P
     MatrixXf P = (E - g*c)*preP;
-    // PRINT_MATRIX(P);
     P_1 = P;
-    // PRINT_MATRIX(P_1);
-
+    
     //DCM to Quaternion
     C << (pow(X(0,0),2)-pow(X(1,0),2)-pow(X(2,0),2)+pow(X(3,0),2)),  2*(X(0,0)*X(1,0)+X(2,0)*X(3,0)),                            2*(X(2,0)*X(0,0)-X(1,0)*X(3,0)),
          2*(X(0,0)*X(1,0)-X(2,0)*X(3,0)),                            (pow(X(1,0),2)-pow(X(2,0),2)-pow(X(0,0),2)+pow(X(3,0),2)),  2*(X(1,0)*X(2,0)+X(0,0)*X(3,0)),
          2*(X(2,0)*X(0,0)+X(1,0)*X(3,0)),                            2*(X(1,0)*X(2,0)-X(0,0)*X(3,0)),                            (pow(X(2,0),2)-pow(X(0,0),2)-pow(X(1,0),2)+pow(X(3,0),2));
-    // PRINT_MATRIX(C);
-
+    
     //roll, pitch, yaw
     Deg[1] = asin(-1*C(0,2));                                  //pitch
     Deg[0] = atan2(C(0,1)/cos(Deg[1]), C(0,0)/cos(Deg[1]));    //yaw
